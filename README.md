@@ -52,7 +52,14 @@ Deploy (uma vez), usando a Supabase CLI:
 npx supabase login                       # abre o navegador para autenticar
 npx supabase link --project-ref ulewxhylokigxkkoqxah
 npx supabase functions deploy criar-usuario
+npx supabase functions deploy criar-aluno
+npx supabase functions deploy aluno-acesso   # pública (verify_jwt=false no config.toml)
 ```
+
+Funções:
+- `criar-usuario` — cria professor/admin (admin autenticado).
+- `criar-aluno` — cria a matrícula do aluno + sua conta de login (admin autenticado).
+- `aluno-acesso` — verifica a matrícula e define a senha no primeiro acesso (pública).
 
 Os secrets `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` já
 são injetados automaticamente pelo Supabase nas Edge Functions. Depois do deploy,
@@ -60,9 +67,14 @@ a tela **Usuários** (admin) passa a criar alunos/professores/admins direto pela
 
 ## Quem loga no sistema
 
-Apenas **professores** e **administradores** têm login. **Alunos não logam** —
-eles são registros na tabela `matriculas` (código + nome do aluno), gerenciados
-pelos professores/admin.
+- **Professores e administradores**: acessam em `/login` (área administrativa).
+- **Alunos**: acessam no **Portal do Aluno** em `/aluno/login`. O aluno digita a
+  matrícula; no **primeiro acesso** ele cria a própria senha; depois entra com
+  matrícula + senha. No portal, vê apenas as suas notas e frequências.
+
+Quando o admin cadastra uma matrícula (tela Matrículas), a conta de login do
+aluno é criada automaticamente (via Edge Function) com senha temporária e
+`primeiro_acesso = true` — o aluno define a senha real no primeiro acesso.
 
 ## Domínio e relacionamentos
 

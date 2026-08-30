@@ -17,6 +17,7 @@ interface AuthContextValue {
   loading: boolean
   isAdmin: boolean
   isProfessor: boolean
+  isAluno: boolean
   canWrite: boolean
   login: (matricula: string, senha: string) => Promise<void>
   logout: () => Promise<void>
@@ -69,11 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = perfil?.tipo === 'ADMINISTRADOR'
   const isProfessor = perfil?.tipo === 'PROFESSOR'
+  const isAluno = perfil?.tipo === 'ALUNO'
   const canWrite = isAdmin || isProfessor
 
   return (
     <AuthContext.Provider
-      value={{ session, perfil, loading, isAdmin, isProfessor, canWrite, login, logout }}
+      value={{ session, perfil, loading, isAdmin, isProfessor, isAluno, canWrite, login, logout }}
     >
       {children}
     </AuthContext.Provider>

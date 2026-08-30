@@ -1,7 +1,6 @@
 // Tipos do domínio, traduzidos das entidades Java (com.faetec.nota.model)
 
-// Apenas quem loga: professores e administradores. Alunos não são usuários.
-export type TipoUsuario = 'PROFESSOR' | 'ADMINISTRADOR'
+export type TipoUsuario = 'ALUNO' | 'PROFESSOR' | 'ADMINISTRADOR'
 
 export type TipoAvaliacao = 'av1' | 'av2' | 'av3'
 
@@ -31,12 +30,13 @@ export interface Turma {
   curso_id: number
 }
 
-// A matrícula representa o aluno (não há login de aluno).
+// A matrícula representa o aluno; usuario_id liga à conta de login dele.
 export interface Matricula {
   id: number
   codigo: string
   nome_aluno: string
   ativo: boolean
+  usuario_id: string | null
 }
 
 export interface MatriculaTurma {

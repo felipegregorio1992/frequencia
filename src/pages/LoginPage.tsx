@@ -101,6 +101,13 @@ export default function LoginPage() {
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
+
+          <a
+            href="/aluno/login"
+            className="mt-4 block text-center text-sm text-slate-500 hover:text-brand-600"
+          >
+            Sou aluno
+          </a>
         </form>
       </div>
     </div>

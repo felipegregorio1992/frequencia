@@ -1,0 +1,14 @@
+project_id = "ulewxhylokigxkkoqxah"
+
+# Cria usuários (professor/admin) — exige admin autenticado
+[functions.criar-usuario]
+verify_jwt = true
+
+# Cria aluno + conta de login — exige admin autenticado
+[functions.criar-aluno]
+verify_jwt = true
+
+# Acesso do aluno (verificar matrícula / definir senha no 1º acesso)
+# Pública: o aluno ainda não está logado ao usar.
+[functions.aluno-acesso]
+verify_jwt = false

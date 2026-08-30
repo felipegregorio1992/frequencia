@@ -19,6 +19,8 @@ const BoletimPage = lazy(() => import('./pages/BoletimPage'))
 const RelatoriosPage = lazy(() => import('./pages/RelatoriosPage'))
 const UsuariosPage = lazy(() => import('./pages/UsuariosPage'))
 const SenhaPage = lazy(() => import('./pages/SenhaPage'))
+const AlunoLoginPage = lazy(() => import('./pages/aluno/AlunoLoginPage'))
+const AlunoPortalPage = lazy(() => import('./pages/aluno/AlunoPortalPage'))
 
 const ADMIN: TipoUsuario[] = ['ADMINISTRADOR']
 const STAFF: TipoUsuario[] = ['ADMINISTRADOR', 'PROFESSOR']
@@ -34,6 +36,17 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/aluno/login" element={<Suspense fallback={<Spinner />}><AlunoLoginPage /></Suspense>} />
+      <Route
+        path="/aluno"
+        element={
+          <ProtectedRoute roles={['ALUNO']} redirectTo="/aluno/login">
+            <Suspense fallback={<Spinner />}>
+              <AlunoPortalPage />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
       <Route
         element={
           <ProtectedRoute>

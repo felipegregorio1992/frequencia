@@ -6,9 +6,11 @@ import type { TipoUsuario } from '../types/domain'
 export function ProtectedRoute({
   children,
   roles,
+  redirectTo = '/login',
 }: {
   children: ReactNode
   roles?: TipoUsuario[]
+  redirectTo?: string
 }) {
   const { session, perfil, loading } = useAuth()
   const location = useLocation()
@@ -22,17 +24,27 @@ export function ProtectedRoute({
   }
 
   if (!session) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={redirectTo} replace />
   }
 
-  // Força troca de senha no primeiro acesso (exceto se já estiver na tela de senha).
-  if (perfil?.primeiro_acesso && location.pathname !== '/senha') {
+  // Alunos são direcionados ao portal do aluno; nunca à área administrativa.
+  if (perfil?.tipo === 'ALUNO' && !location.pathname.startsWith('/aluno')) {
+    return <Navigate to="/aluno" replace />
+  }
+
+  // Força troca de senha no primeiro acesso (só para staff; aluno cria no login).
+  if (
+    perfil?.primeiro_acesso &&
+    perfil.tipo !== 'ALUNO' &&
+    location.pathname !== '/senha'
+  ) {
     return <Navigate to="/senha" replace />
   }
 
-  // Restrição por papel: quem não tem permissão volta para a home.
+  // Restrição por papel.
   if (roles && perfil && !roles.includes(perfil.tipo)) {
-    return <Navigate to="/" replace />
+    // aluno tentando área staff -> portal; staff tentando /aluno -> home
+    return <Navigate to={perfil.tipo === 'ALUNO' ? '/aluno' : '/'} replace />
   }
 
   return <>{children}</>

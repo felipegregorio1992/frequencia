@@ -23,14 +23,15 @@ export default function MatriculasPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const payload = { codigo, nome_aluno: nomeAluno, ativo }
     try {
       if (editandoId) {
-        await update.mutateAsync({ id: editandoId, payload })
+        await update.mutateAsync({ id: editandoId, payload: { codigo, nome_aluno: nomeAluno, ativo } })
         notify('Matrícula atualizada.', 'success')
       } else {
-        await create.mutateAsync(payload)
-        notify('Matrícula criada.', 'success')
+        // O trigger no banco cria a conta de login do aluno automaticamente
+        // (senha inicial = código; o aluno define a senha no 1º acesso).
+        await create.mutateAsync({ codigo, nome_aluno: nomeAluno, ativo })
+        notify(`Aluno ${codigo} cadastrado. Senha inicial = a matrícula; ele define a senha no 1º acesso.`, 'success')
       }
       cancelar()
     } catch (err) {
