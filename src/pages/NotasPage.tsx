@@ -8,14 +8,10 @@ import { useToast } from '../ui/ToastContext'
 import { PageHeader, Spinner, EmptyState, Badge } from '../ui/primitives'
 import type { Turma } from '../types/domain'
 
-interface TurmaComCurso extends Turma {
-  curso?: { nome: string } | null
-}
-
 interface AvalOption {
   id: number
   tipo: string
-  disciplina?: { id: number; nome: string; curso_id: number } | null
+  disciplina?: { id: number; nome: string; turma_id: number | null } | null
 }
 
 interface AlunoNota {
@@ -72,10 +68,10 @@ export default function NotasPage() {
   const { notify } = useToast()
   const qc = useQueryClient()
 
-  const { data: turmas = [] } = useList<TurmaComCurso>('turmas', '*, curso:cursos(nome)', 'nome')
+  const { data: turmas = [] } = useList<Turma>('turmas', 'id, nome, quantidade_tempos, curso_id', 'nome')
   const { data: avaliacoes = [] } = useList<AvalOption>(
     'avaliacoes',
-    'id, tipo, disciplina:disciplinas(id, nome, curso_id)',
+    'id, tipo, disciplina:disciplinas(id, nome, turma_id)',
     'id',
   )
 
@@ -86,14 +82,11 @@ export default function NotasPage() {
   const [salvandoId, setSalvandoId] = useState<number | null>(null)
   const [salvandoTodos, setSalvandoTodos] = useState(false)
 
-  const cursoDaTurma = useMemo(
-    () => turmas.find((t) => String(t.id) === turmaId)?.curso_id ?? null,
-    [turmas, turmaId],
-  )
+  // Avaliações compatíveis = as das matérias da turma selecionada.
   const avaliacoesCompativeis = useMemo(() => {
-    if (cursoDaTurma == null) return []
-    return avaliacoes.filter((a) => a.disciplina?.curso_id === cursoDaTurma)
-  }, [avaliacoes, cursoDaTurma])
+    if (!turmaId) return []
+    return avaliacoes.filter((a) => String(a.disciplina?.turma_id ?? '') === turmaId)
+  }, [avaliacoes, turmaId])
 
   const habilitado = Boolean(turmaId && avaliacaoId)
 
@@ -201,7 +194,7 @@ export default function NotasPage() {
           <option value="">Selecione a turma</option>
           {turmas.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.nome} {t.curso?.nome ? `· ${t.curso.nome}` : ''}
+              {t.nome}
             </option>
           ))}
         </select>

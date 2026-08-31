@@ -1,12 +1,16 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../ui/ToastContext'
 import { PageHeader } from '../ui/primitives'
 import { traduzErro } from '../hooks/useEntities'
 
 export default function SenhaPage() {
   const { notify } = useToast()
+  const { refreshPerfil } = useAuth()
+  const navigate = useNavigate()
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmar, setConfirmar] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,6 +37,9 @@ export default function SenhaPage() {
       notify('Senha alterada com sucesso.', 'success')
       setNovaSenha('')
       setConfirmar('')
+      // Atualiza o perfil em memória (primeiro_acesso = false) e sai da tela.
+      await refreshPerfil()
+      navigate('/', { replace: true })
     } catch (err) {
       notify(err instanceof Error ? traduzErro(err.message) : 'Erro ao alterar senha.', 'error')
     } finally {

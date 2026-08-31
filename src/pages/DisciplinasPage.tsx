@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
-import type { Curso, Disciplina } from '../types/domain'
+import type { Disciplina, Turma } from '../types/domain'
 import { useList, useEntityMutations } from '../hooks/useEntities'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../ui/ToastContext'
@@ -8,37 +8,42 @@ import { useConfirm } from '../ui/ConfirmContext'
 import { PageHeader } from '../ui/primitives'
 import { DataTable, type Column } from '../ui/DataTable'
 
-interface DisciplinaComCurso extends Disciplina {
-  curso?: { nome: string } | null
+interface DisciplinaComTurma extends Disciplina {
+  turma?: { nome: string } | null
 }
 
 export default function DisciplinasPage() {
-  const { isAdmin } = useAuth()
+  const { canWrite } = useAuth()
   const { notify } = useToast()
   const { confirm } = useConfirm()
-  const { data: disciplinas = [], isLoading } = useList<DisciplinaComCurso>(
+  const { data: disciplinas = [], isLoading } = useList<DisciplinaComTurma>(
     'disciplinas',
-    '*, curso:cursos(nome)',
+    '*, turma:turmas(nome)',
     'nome',
   )
-  const { data: cursos = [] } = useList<Curso>('cursos', '*', 'nome')
+  // RLS já limita as turmas às do professor logado (admin vê todas).
+  const { data: turmas = [] } = useList<Turma>('turmas', 'id, nome, quantidade_tempos, curso_id', 'nome')
   const { create, update, remove } = useEntityMutations('disciplinas')
 
   const [nome, setNome] = useState('')
-  const [cursoId, setCursoId] = useState('')
+  const [turmaId, setTurmaId] = useState('')
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const salvando = create.isPending || update.isPending
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const payload = { nome, curso_id: Number(cursoId) }
+    if (!turmaId) {
+      notify('Selecione a turma.', 'error')
+      return
+    }
+    const payload = { nome, turma_id: Number(turmaId) }
     try {
       if (editandoId) {
         await update.mutateAsync({ id: editandoId, payload })
-        notify('Disciplina atualizada.', 'success')
+        notify('Matéria atualizada.', 'success')
       } else {
         await create.mutateAsync(payload)
-        notify('Disciplina criada.', 'success')
+        notify('Matéria criada.', 'success')
       }
       cancelar()
     } catch (err) {
@@ -46,48 +51,48 @@ export default function DisciplinasPage() {
     }
   }
 
-  function editar(d: DisciplinaComCurso) {
+  function editar(d: DisciplinaComTurma) {
     setEditandoId(d.id)
     setNome(d.nome)
-    setCursoId(String(d.curso_id))
+    setTurmaId(d.turma_id ? String(d.turma_id) : '')
   }
 
   function cancelar() {
     setEditandoId(null)
     setNome('')
-    setCursoId('')
+    setTurmaId('')
   }
 
-  async function excluir(d: DisciplinaComCurso) {
+  async function excluir(d: DisciplinaComTurma) {
     const ok = await confirm({
-      message: `Excluir a disciplina "${d.nome}"?`,
+      message: `Excluir a matéria "${d.nome}"? Avaliações e notas vinculadas serão removidas.`,
       confirmText: 'Excluir',
     })
     if (!ok) return
     try {
       await remove.mutateAsync(d.id)
-      notify('Disciplina excluída.', 'success')
+      notify('Matéria excluída.', 'success')
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Erro ao excluir.', 'error')
     }
   }
 
-  const colunas: Column<DisciplinaComCurso>[] = [
-    { key: 'nome', header: 'Nome', accessor: (d) => d.nome },
+  const colunas: Column<DisciplinaComTurma>[] = [
+    { key: 'nome', header: 'Matéria', accessor: (d) => d.nome },
     {
-      key: 'curso',
-      header: 'Curso',
-      accessor: (d) => d.curso?.nome ?? '',
-      render: (d) => <span className="text-slate-500 dark:text-slate-400">{d.curso?.nome ?? '—'}</span>,
+      key: 'turma',
+      header: 'Turma',
+      accessor: (d) => d.turma?.nome ?? '',
+      render: (d) => <span className="text-slate-500 dark:text-slate-400">{d.turma?.nome ?? '—'}</span>,
     },
-    ...(isAdmin
+    ...(canWrite
       ? [
           {
             key: 'acoes',
             header: 'Ações',
             align: 'right' as const,
             sortable: false,
-            render: (d: DisciplinaComCurso) => (
+            render: (d: DisciplinaComTurma) => (
               <div className="flex justify-end">
                 <button
                   onClick={() => editar(d)}
@@ -110,27 +115,27 @@ export default function DisciplinasPage() {
 
   return (
     <div>
-      <PageHeader title="Disciplinas" description="Disciplinas vinculadas a cada curso." />
+      <PageHeader title="Matérias" description="Matérias de cada turma. Você gerencia as matérias das suas turmas." />
 
-      {isAdmin && (
+      {canWrite && (
         <form onSubmit={handleSubmit} className="card mb-6 flex flex-wrap gap-2 p-4">
           <input
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Nome da disciplina"
+            placeholder="Nome da matéria"
             className="input flex-1"
             required
           />
           <select
-            value={cursoId}
-            onChange={(e) => setCursoId(e.target.value)}
+            value={turmaId}
+            onChange={(e) => setTurmaId(e.target.value)}
             className="input w-full sm:w-56"
             required
           >
-            <option value="">Selecione o curso</option>
-            {cursos.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
+            <option value="">Selecione a turma</option>
+            {turmas.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nome}
               </option>
             ))}
           </select>
@@ -150,8 +155,8 @@ export default function DisciplinasPage() {
         data={disciplinas}
         loading={isLoading}
         rowKey={(d) => d.id}
-        emptyMessage="Nenhuma disciplina cadastrada."
-        searchPlaceholder="Buscar disciplina ou curso..."
+        emptyMessage="Nenhuma matéria cadastrada."
+        searchPlaceholder="Buscar matéria ou turma..."
         columns={colunas}
       />
     </div>

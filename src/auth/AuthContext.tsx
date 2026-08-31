@@ -21,6 +21,7 @@ interface AuthContextValue {
   canWrite: boolean
   login: (matricula: string, senha: string) => Promise<void>
   logout: () => Promise<void>
+  refreshPerfil: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -43,18 +44,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
+  async function carregarPerfil(userId: string) {
+    const { data } = await supabase.from('usuarios').select('*').eq('id', userId).single()
+    setPerfil(data as Usuario | null)
+  }
+
   useEffect(() => {
     if (!session?.user) {
       setPerfil(null)
       return
     }
-    supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => setPerfil(data as Usuario | null))
+    carregarPerfil(session.user.id)
   }, [session])
+
+  // Recarrega o perfil do banco (ex.: após concluir a troca de senha,
+  // para refletir primeiro_acesso = false sem precisar deslogar).
+  async function refreshPerfil() {
+    if (session?.user) await carregarPerfil(session.user.id)
+  }
 
   async function login(matricula: string, senha: string) {
     const { error } = await supabase.auth.signInWithPassword({
@@ -75,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, perfil, loading, isAdmin, isProfessor, isAluno, canWrite, login, logout }}
+      value={{ session, perfil, loading, isAdmin, isProfessor, isAluno, canWrite, login, logout, refreshPerfil }}
     >
       {children}
     </AuthContext.Provider>

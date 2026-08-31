@@ -29,20 +29,27 @@ export default function UsuariosPage() {
       notify('A senha deve ter ao menos 6 caracteres.', 'error')
       return
     }
+    const login = matricula.trim().toLowerCase()
+    if (!login) {
+      notify('Informe uma matrícula.', 'error')
+      return
+    }
     setSalvando(true)
     try {
-      const { data, error } = await supabase.functions.invoke('criar-usuario', {
-        body: { matricula, senha, tipo },
+      // Cria o usuário via RPC no banco (função `criar_usuario_admin`,
+      // security definer). Ela valida se quem chama é ADMINISTRADOR, cria a
+      // conta no Auth já confirmada e o perfil em `usuarios`. Não usa signUp
+      // (que esbarra em validação de e-mail e rate limit) nem Edge Function.
+      const { data, error } = await supabase.rpc('criar_usuario_admin', {
+        p_matricula: login,
+        p_senha: senha,
+        p_tipo: tipo,
       })
-      if (error) {
-        // erros lançados pela função vêm no context
-        const msg = (data as { error?: string })?.error ?? error.message
-        throw new Error(msg)
-      }
-      if ((data as { error?: string })?.error) {
-        throw new Error((data as { error: string }).error)
-      }
-      notify(`Usuário ${matricula} criado.`, 'success')
+      if (error) throw new Error(error.message)
+      const res = data as { ok?: boolean; error?: string }
+      if (res?.error) throw new Error(res.error)
+
+      notify(`Usuário ${login} criado.`, 'success')
       setMatricula('')
       setSenha('')
       setTipo('PROFESSOR')

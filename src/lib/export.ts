@@ -43,6 +43,31 @@ export function exportarPDF(titulo: string, secoes: Secao[], nomeArquivo: string
   doc.save(`${nomeArquivo}.pdf`)
 }
 
+// Lê uma planilha (.xlsx/.xls/.csv) e devolve as linhas como objetos,
+// usando a primeira linha como cabeçalho. As chaves são normalizadas
+// (minúsculas, sem acento) para facilitar o mapeamento de colunas.
+export async function lerPlanilha(arquivo: File): Promise<Record<string, string>[]> {
+  const buffer = await arquivo.arrayBuffer()
+  const wb = XLSX.read(buffer, { type: 'array' })
+  const primeiraAba = wb.SheetNames[0]
+  if (!primeiraAba) return []
+  const ws = wb.Sheets[primeiraAba]
+  const linhas = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+  return linhas.map((linha) => {
+    const obj: Record<string, string> = {}
+    for (const [chave, valor] of Object.entries(linha)) {
+      const chaveNormalizada = chave
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+      obj[chaveNormalizada] = String(valor ?? '').trim()
+    }
+    return obj
+  })
+}
+
 // Exporta uma ou mais seções para Excel (cada seção vira uma aba).
 export function exportarExcel(secoes: Secao[], nomeArquivo: string) {
   const wb = XLSX.utils.book_new()

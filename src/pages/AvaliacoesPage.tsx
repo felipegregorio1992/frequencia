@@ -12,10 +12,14 @@ interface AvaliacaoComDisciplina extends Avaliacao {
   disciplina?: { nome: string } | null
 }
 
+interface DisciplinaComTurma extends Disciplina {
+  turma?: { nome: string } | null
+}
+
 const TIPOS: TipoAvaliacao[] = ['av1', 'av2', 'av3']
 
 export default function AvaliacoesPage() {
-  const { isAdmin } = useAuth()
+  const { canWrite } = useAuth()
   const { notify } = useToast()
   const { confirm } = useConfirm()
   const { data: avaliacoes = [], isLoading } = useList<AvaliacaoComDisciplina>(
@@ -23,7 +27,11 @@ export default function AvaliacoesPage() {
     '*, disciplina:disciplinas(nome)',
     'id',
   )
-  const { data: disciplinas = [] } = useList<Disciplina>('disciplinas', '*', 'nome')
+  const { data: disciplinas = [] } = useList<DisciplinaComTurma>(
+    'disciplinas',
+    'id, nome, curso_id, turma_id, turma:turmas(nome)',
+    'nome',
+  )
   const { create, update, remove } = useEntityMutations('avaliacoes')
 
   const [tipo, setTipo] = useState<TipoAvaliacao>('av1')
@@ -97,7 +105,7 @@ export default function AvaliacoesPage() {
       accessor: (a) => a.peso ?? 0,
       render: (a) => <span className="text-slate-500 dark:text-slate-400">{a.peso ?? '—'}</span>,
     },
-    ...(isAdmin
+    ...(canWrite
       ? [
           {
             key: 'acoes',
@@ -129,7 +137,7 @@ export default function AvaliacoesPage() {
     <div>
       <PageHeader title="Avaliações" description="Avaliações por disciplina, com peso para a média." />
 
-      {isAdmin && (
+      {canWrite && (
         <form onSubmit={handleSubmit} className="card mb-6 flex flex-wrap gap-2 p-4">
           <select
             value={tipo}
@@ -148,10 +156,11 @@ export default function AvaliacoesPage() {
             className="input flex-1"
             required
           >
-            <option value="">Selecione a disciplina</option>
+            <option value="">Selecione a matéria</option>
             {disciplinas.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.nome}
+                {d.turma?.nome ? ` · ${d.turma.nome}` : ''}
               </option>
             ))}
           </select>

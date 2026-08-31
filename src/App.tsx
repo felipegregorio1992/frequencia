@@ -56,10 +56,10 @@ export default function App() {
       >
         <Route path="/" element={<Pagina><DashboardPage /></Pagina>} />
         <Route path="/cursos" element={<Pagina roles={ADMIN}><CursosPage /></Pagina>} />
-        <Route path="/disciplinas" element={<Pagina roles={ADMIN}><DisciplinasPage /></Pagina>} />
+        <Route path="/disciplinas" element={<Pagina roles={STAFF}><DisciplinasPage /></Pagina>} />
         <Route path="/turmas" element={<Pagina roles={ADMIN}><TurmasPage /></Pagina>} />
-        <Route path="/matriculas" element={<Pagina roles={ADMIN}><MatriculasPage /></Pagina>} />
-        <Route path="/matriculas-turmas" element={<Pagina roles={ADMIN}><MatriculasTurmasPage /></Pagina>} />
+        <Route path="/matriculas" element={<Pagina roles={STAFF}><MatriculasPage /></Pagina>} />
+        <Route path="/matriculas-turmas" element={<Pagina roles={STAFF}><MatriculasTurmasPage /></Pagina>} />
         <Route path="/usuarios" element={<Pagina roles={ADMIN}><UsuariosPage /></Pagina>} />
         <Route path="/avaliacoes" element={<Pagina roles={STAFF}><AvaliacoesPage /></Pagina>} />
         <Route path="/notas" element={<Pagina roles={STAFF}><NotasPage /></Pagina>} />

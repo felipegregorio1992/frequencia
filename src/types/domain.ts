@@ -21,13 +21,21 @@ export interface Disciplina {
   id: number
   nome: string
   curso_id: number | null
+  turma_id: number | null
 }
 
 export interface Turma {
   id: number
   nome: string
   quantidade_tempos: number
-  curso_id: number
+  curso_id: number | null
+}
+
+// Vínculo N:N entre professores e turmas (admin gerencia).
+export interface ProfessorTurma {
+  id: number
+  professor_id: string
+  turma_id: number
 }
 
 // A matrícula representa o aluno; usuario_id liga à conta de login dele.

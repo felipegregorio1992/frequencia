@@ -14,7 +14,7 @@ interface MatriculaTurmaDetalhe extends MatriculaTurma {
 }
 
 export default function MatriculasTurmasPage() {
-  const { isAdmin } = useAuth()
+  const { canWrite } = useAuth()
   const { notify } = useToast()
   const { confirm } = useConfirm()
   const { data: itens = [], isLoading } = useList<MatriculaTurmaDetalhe>(
@@ -70,7 +70,7 @@ export default function MatriculasTurmasPage() {
       accessor: (i) => i.turma?.nome ?? '',
       render: (i) => <span className="text-slate-500 dark:text-slate-400">{i.turma?.nome ?? '—'}</span>,
     },
-    ...(isAdmin
+    ...(canWrite
       ? [
           {
             key: 'acoes',
@@ -99,7 +99,7 @@ export default function MatriculasTurmasPage() {
         description="Associação entre uma matrícula e uma turma."
       />
 
-      {isAdmin && (
+      {canWrite && (
         <form onSubmit={handleSubmit} className="card mb-6 flex flex-wrap gap-2 p-4">
           <select
             value={matriculaId}
